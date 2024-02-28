@@ -21,8 +21,9 @@ class WebController extends Controller
 
     public function tool(Request $request)
     {
-        $defaultTime = new DateTime('08:00:00');
-        $dataStaff = [];
+        $formDate = $request->input('calendar-from-date', '');
+        $defaultTime = new DateTime('07:50:00');
+        $dataStaff = $staffCodeComplain = [];
 
         if ($token = $this->getAccessToken()) {
 
@@ -30,37 +31,16 @@ class WebController extends Controller
             $positions = $this->listPosition();
             $timeKeepings = $this->listTimeKeepings();
 
-            // Get data staff WFH
-            $dataWFH = $this->getDataStaffWFH($token, $request->input('calendar-from-date'), $request->input('calendar-from-date'));
-            foreach ($dataWFH as $itemWFH) {
-                $formDate = $request->input('calendar-from-date', '');
-                $timeKeepingsStaff = collect($timeKeepings[$itemWFH['userStaffCode']]['timeKeepings'] ?? [])->mapWithKeys(function ($item) {
-                    return [$item['dateKeeping'] => $item];
-                })->toArray();
-
-                $dataStaff[] = [
-                    'staffCode' => $itemWFH['userStaffCode'] ?? '',
-                    'staffName' => $itemWFH['username'] ?? '',
-                    'staffPosition' => $this->getPositionByStaffCode($itemWFH['userStaffCode'] ?? '', $positions),
-                    'requestType' => 'WFH',
-                    'requestCreatedAt' => $itemWFH['createdAt'] ?? '',
-                    'isViolateCreatedAt' => !empty($itemWFH['createdAt']) && (new DateTime($itemWFH['createdAt'])) > $defaultTime,
-                    'requestStatus' => $itemWFH['statusApproval'] ?? '',
-                    'displayStatus' => $this->getDisplayApproveStatus($itemWFH['statusApproval'] ?? ''),
-                    'requestReason' => $itemWFH['reason'] ?? '',
-                    'timeCheckIn' => $timeKeepingsStaff[$formDate]['timeCheckIn'] ?? '',
-                    'isViolatetimeCheckIn' => empty($timeKeepingsStaff[$formDate]['timeCheckIn']) || (new DateTime($timeKeepingsStaff[$formDate]['timeCheckIn'])) > $defaultTime
-                ];
-            }
-
             // Get data staff OFF
             $dataOff = $this->getDataStaffOff($token, $request->input('calendar-from-date'), $request->input('calendar-from-date'));
             foreach ($dataOff as $itemOff) {
                 $userObjId = $itemOff['userObjId'] ?? [];
+
+                $staffCodeComplain[] = $userObjId['staffCode'] ?? '';
                 $dataStaff[] = [
                     'staffCode' => $userObjId['staffCode'] ?? '',
                     'staffName' => $userObjId['name'] ?? '',
-                    'staffPosition' => $this->getPositionByStaffCode($itemWFH['userStaffCode'] ?? '', $positions),
+                    'staffPosition' => $this->getPositionByStaffCode($userObjId['staffCode'] ?? '', $positions),
                     'requestType' => 'Nghỉ phép',
                     'requestCreatedAt' => $itemOff['createdAt'] ?? '',
                     'isViolateCreatedAt' => !empty($itemOff['createdAt']) && (new DateTime($itemOff['createdAt'])) > $defaultTime,
@@ -72,10 +52,70 @@ class WebController extends Controller
                 ];
             }
 
-            // Sort data off/wfh by staffCode
-            if (count($dataStaff)) {
-                $dataStaff = collect($dataStaff)->sortBy('staffCode')->values()->all();
+            // Get data staff WFH
+            $dataWFH = $this->getDataStaffWFH($token, $request->input('calendar-from-date'), $request->input('calendar-from-date'));
+            foreach ($dataWFH as $itemWFH) {
+                $timeKeepingsStaff = collect($timeKeepings[$itemWFH['userStaffCode']]['timeKeepings'] ?? [])->mapWithKeys(function ($item) {
+                    return [$item['dateKeeping'] => $item];
+                })->toArray();
+
+                $staffCodeComplain[] = $itemWFH['userStaffCode'] ?? '';
+                $dataStaff[] = [
+                    'staffCode' => $itemWFH['userStaffCode'] ?? '',
+                    'staffName' => $itemWFH['username'] ?? '',
+                    'staffPosition' => $this->getPositionByStaffCode($itemWFH['userStaffCode'] ?? '', $positions),
+                    'requestType' => 'WFH',
+                    'requestCreatedAt' => $itemWFH['createdAt'] ?? '',
+                    'isViolateCreatedAt' => !empty($itemWFH['createdAt']) && (new DateTime($itemWFH['createdAt'])) > $defaultTime,
+                    'requestStatus' => $itemWFH['statusApproval'] ?? '',
+                    'displayStatus' => $this->getDisplayApproveStatus($itemWFH['statusApproval'] ?? ''),
+                    'requestReason' => $itemWFH['reason'] ?? '',
+                    'timeCheckIn' => $timeKeepingsStaff[$formDate]['timeCheckInRaw'] ?? '',
+                    'isViolatetimeCheckIn' => empty($timeKeepingsStaff[$formDate]['timeCheckInRaw']) || (new DateTime($timeKeepingsStaff[$formDate]['timeCheckInRaw'])) > $defaultTime
+                ];
             }
+
+            // Get data staff empty / checkin
+            $dataEmpty = $dataCheckIn = [];
+            foreach ($timeKeepings as $code => $staff) {
+                if (!in_array(intval($code), $staffCodeComplain)) {
+                    $dateKeepingStaff = collect($staff['timeKeepings'] ?? [])->mapWithKeys(function ($item) {
+                        return [$item['dateKeeping'] => $item];
+                    })->toArray();
+                    if (isset($dateKeepingStaff[$formDate])) {
+                        if (empty($dateKeepingStaff[$formDate]['timeCheckIn'])) {
+                            $dataEmpty[] = [
+                                'staffCode' => $staff['staffCode'] ?? '',
+                                'staffName' => $staff['name'] ?? '',
+                                'staffPosition' => $staff['positionName'] ?? '',
+                                'requestType' => '-',
+                                'requestCreatedAt' => '',
+                                'isViolateCreatedAt' => false,
+                                'requestStatus' => '',
+                                'displayStatus' => '',
+                                'requestReason' => '',
+                                'timeCheckIn' => '',
+                                'isViolatetimeCheckIn' => true
+                            ];
+                        } else {
+                            $dataCheckIn[] = [
+                                'staffCode' => $staff['staffCode'] ?? '',
+                                'staffName' => $staff['name'] ?? '',
+                                'staffPosition' => $staff['positionName'] ?? '',
+                                'requestType' => 'Bình thường',
+                                'requestCreatedAt' => '',
+                                'isViolateCreatedAt' => false,
+                                'requestStatus' => '',
+                                'displayStatus' => '',
+                                'requestReason' => '',
+                                'timeCheckIn' => $dateKeepingStaff[$formDate]['timeCheckIn'],
+                                'isViolatetimeCheckIn' => (new DateTime($dateKeepingStaff[$formDate]['timeCheckIn'])) > $defaultTime
+                            ];
+                        }
+                    }
+                }
+            }
+            $dataStaff = array_merge($dataStaff, $dataCheckIn, $dataEmpty);
         }
 
         return view('tool')->with(['dataStaff' => $dataStaff]);

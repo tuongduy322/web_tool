@@ -74,10 +74,10 @@ $defaultTime = new DateTime('08:00:00');
                         </div>
                     </td>
                     <td>
-                        <div class="cell">{{$item['staffPosition']}}</div>
+                        <div class="cell cell--left">{{$item['staffPosition']}}</div>
                     </td>
                     <td>
-                        <div class="cell">{{ $item['requestType'] }}</div>
+                        <div class="cell  cell--left">{{ $item['requestType'] }}</div>
                     </td>
                     <td>
                         <div class="cell {{ $item['isViolateCreatedAt'] ? 'text-red' : '' }}">{{ $item['requestCreatedAt'] }}</div>
@@ -87,7 +87,9 @@ $defaultTime = new DateTime('08:00:00');
                     </td>
                     <td>
                         <div class="cell">
+                            @if(!empty($item['displayStatus']))
                             <p class="status {{ $item['requestStatus'] === 'APPROVED' ? 'status--approved' : 'status--waiting'}}">{{ $item['displayStatus'] }}</p>
+                            @endif
                         </div>
                     </td>
                     <td>
