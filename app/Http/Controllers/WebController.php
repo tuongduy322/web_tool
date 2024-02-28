@@ -21,6 +21,7 @@ class WebController extends Controller
 
     public function tool(Request $request)
     {
+        $defaultTime = new DateTime('06:00:00');
         $dataStaff = [];
 
         if ($token = $this->getAccessToken()) {
@@ -43,9 +44,11 @@ class WebController extends Controller
                     'staffPosition' => $this->getPositionByStaffCode($itemWFH['userStaffCode'] ?? '', $positions),
                     'requestType' => 'WFH',
                     'requestCreatedAt' => $itemWFH['createdAt'] ?? '',
+                    'isViolateCreatedAt' => !empty($itemWFH['createdAt']) && (new DateTime($itemWFH['createdAt'])) > $defaultTime,
                     'requestStatus' => $itemWFH['statusApproval'] ?? '',
                     'requestReason' => $itemWFH['reason'] ?? '',
-                    'timeCheckIn' => $timeKeepingsStaff[$formDate]['timeCheckIn'] ?? ''
+                    'timeCheckIn' => $timeKeepingsStaff[$formDate]['timeCheckIn'] ?? '',
+                    'isViolatetimeCheckIn' => !empty($timeKeepingsStaff[$formDate]['timeCheckIn']) && (new DateTime($timeKeepingsStaff[$formDate]['timeCheckIn'])) > $defaultTime
                 ];
             }
 
@@ -59,9 +62,11 @@ class WebController extends Controller
                     'staffPosition' => $this->getPositionByStaffCode($itemWFH['userStaffCode'] ?? '', $positions),
                     'requestType' => 'Nghỉ phép',
                     'requestCreatedAt' => $itemOff['createdAt'] ?? '',
+                    'isViolateCreatedAt' => !empty($itemOff['createdAt']) && (new DateTime($itemOff['createdAt'])) > $defaultTime,
                     'requestStatus' => $itemOff['statusApproval'] ?? '',
                     'requestReason' => $itemOff['reason'] ?? '',
-                    'timeCheckIn' => null
+                    'timeCheckIn' => null,
+                    'isViolatetimeCheckIn' => false,
                 ];
             }
 

@@ -80,10 +80,10 @@ $defaultTime = new DateTime('08:00:00');
                         <div class="cell">{{ $item['requestType'] }}</div>
                     </td>
                     <td>
-                        <div class="cell {{ (new DateTime($item['requestCreatedAt'])) > $defaultTime ? 'text-red' : '' }}">{{ $item['requestCreatedAt'] }}</div>
+                        <div class="cell {{ $item['isViolateCreatedAt'] ? 'text-red' : '' }}">{{ $item['requestCreatedAt'] }}</div>
                     </td>
                     <td>
-                        <div class="cell {{ (new DateTime($item['timeCheckIn'])) > $defaultTime ? 'text-red' : '' }}">{{ $item['timeCheckIn'] }}</div>
+                        <div class="cell {{ $item['isViolatetimeCheckIn'] ? 'text-red' : '' }}">{{ $item['timeCheckIn'] }}</div>
                     </td>
                     <td>
                         <div class="cell">
@@ -96,11 +96,7 @@ $defaultTime = new DateTime('08:00:00');
                         </div>
                     </td>
                     <td>
-                    @if(isset($item['requestCreatedAt']))
-                        <div class="cell text-red">{{ ((new DateTime($item['requestCreatedAt'])) > $defaultTime || (new DateTime($item['timeCheckIn'])) > $defaultTime ) ? 'Có' : 'Không' }}</div>
-                    @else
-                        <div class="cell text-red">Không</div>
-                    @endif
+                        <div class="cell {{ $item['isViolateCreatedAt'] || $item['isViolatetimeCheckIn'] ? 'text-red' : '' }}">{{ $item['isViolateCreatedAt'] || $item['isViolatetimeCheckIn'] ? 'Có' : 'Không' }}</div>
                     </td>
                 </tr>
             @endforeach
