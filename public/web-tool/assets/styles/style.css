@@ -217,8 +217,8 @@ html {
 #table-container #table .head-cell {
   background-color: #597eaa;
   color: #ffffff;
-  padding: 4px;
-  text-align: center;
+  padding: 11px;
+  text-align: left;
   border: 1px solid #fff;
   font-weight: 600;
   line-height: 24px;
@@ -231,7 +231,7 @@ html {
   background-color: #f6f6f6;
 }
 #table-container #table tbody .row .cell {
-  padding: 12px 8px;
+  padding: 12px 11px;
   display: flex;
   align-items: center;
   justify-content: center;

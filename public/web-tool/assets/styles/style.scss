@@ -1,6 +1,6 @@
-/* 
+/*
  build css file
- >>> sass --watch ./assets/styles/style.scss ./assets/styles/style.css 
+ >>> sass --watch ./assets/styles/style.scss ./assets/styles/style.css
 */
 
 @import "./reset.scss";
@@ -81,8 +81,8 @@ html {
     .head-cell {
       background-color: #597eaa;
       color: #ffffff;
-      padding: 4px;
-      text-align: center;
+      padding: 8px;
+      text-align: left;
       border: 1px solid #fff;
       font-weight: 600;
       line-height: 24px;

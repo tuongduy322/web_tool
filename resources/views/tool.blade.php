@@ -77,13 +77,13 @@ $defaultTime = new DateTime('08:00:00');
                         <div class="cell cell--left">{{$item['staffPosition']}}</div>
                     </td>
                     <td>
-                        <div class="cell  cell--left">{{ $item['requestType'] }}</div>
+                        <div class="cell cell--left">{{ $item['requestType'] }}</div>
                     </td>
                     <td>
-                        <div class="cell {{ $item['isViolateCreatedAt'] ? 'text-red' : '' }}">{{ $item['requestCreatedAt'] }}</div>
+                        <div class="cell cell--left {{ $item['isViolateCreatedAt'] ? 'text-red' : '' }}">{{ $item['requestCreatedAt'] }}</div>
                     </td>
                     <td>
-                        <div class="cell {{ $item['isViolatetimeCheckIn'] ? 'text-red' : '' }}">{{ $item['timeCheckIn'] }}</div>
+                        <div class="cell cell--left {{ $item['isViolatetimeCheckIn'] ? 'text-red' : '' }}">{{ $item['timeCheckIn'] }}</div>
                     </td>
                     <td>
                         <div class="cell">
