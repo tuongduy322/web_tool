@@ -1,0 +1,168 @@
+/* 
+ build css file
+ >>> sass --watch ./assets/styles/style.scss ./assets/styles/style.css 
+*/
+
+@import "./reset.scss";
+@import "./calendar.scss";
+*,
+html {
+  font-family: "Poppins", sans-serif;
+}
+
+#table-container {
+  margin: 20px;
+  overflow-x: auto;
+
+  .table-filter {
+    margin-bottom: 16px;
+    display: flex;
+    gap: 8px;
+
+    .date-picker {
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      &__label {
+        color: #464e5f;
+        font-weight: 600;
+        font-size: 14px;
+        span {
+          color: #f44336;
+        }
+      }
+      &__input {
+        flex: 1;
+        border: 1.5px solid #00000042;
+        padding-left: 10px;
+        line-height: 36px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #464e5f;
+
+        &:focus-visible {
+          outline: none;
+        }
+      }
+
+      input[type="date"]::-webkit-inner-spin-button,
+      input[type="date"]::-webkit-calendar-picker-indicator {
+        display: none;
+        -webkit-appearance: none;
+      }
+
+      &__box {
+        display: flex;
+        position: relative;
+        .calendar-icon {
+          position: absolute;
+          display: inline-block;
+          width: 20px;
+          height: 20px;
+          right: 12px;
+          bottom: 0;
+          top: 10px;
+          pointer-events: none;
+        }
+      }
+    }
+  }
+
+  #table {
+    padding: 0 20px;
+    font-size: 14px;
+    border-spacing: 0 12px;
+    min-width: 1080px;
+    width: 100%;
+
+    .head-cell {
+      background-color: #597eaa;
+      color: #ffffff;
+      padding: 4px;
+      text-align: center;
+      border: 1px solid #fff;
+      font-weight: 600;
+      line-height: 24px;
+    }
+
+    tbody {
+      .row {
+        padding: 12px 0;
+        border-bottom: 1px solid #efefef;
+
+        &:hover {
+          background-color: #f6f6f6;
+        }
+
+        .cell {
+          padding: 12px 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          color: #464e5f;
+          min-height: 30px;
+        }
+
+        .cell--left {
+          justify-content: flex-start;
+        }
+        .cell--right {
+          justify-content: flex-end;
+        }
+
+        // NAME
+        .name {
+          max-width: 200px;
+        }
+
+        // SUBMIT DATE
+
+        // STATUS BADGE
+        .status {
+          height: 30px;
+          width: 100px;
+          border-radius: 8px;
+          background-color: #e5e5e5;
+          color: #5e5e5e;
+          text-align: center;
+          line-height: 30px;
+          font-weight: 600;
+          margin: 0 auto;
+          &--waiting {
+            background-color: #d3ebd0;
+            color: #229a16;
+          }
+          &--approved {
+            color: #b78103;
+            background-color: #f0e5cc;
+          }
+        }
+
+        // REASON
+        .reason {
+          max-width: 300px;
+        }
+
+        // GENERAL ATTRIBUTE FOR CELL
+
+        .text-red {
+          color: #ff0000;
+        }
+
+        .text-limit {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          line-clamp: 1;
+          -webkit-box-orient: vertical;
+          line-height: 1.3;
+        }
+      }
+    }
+  }
+}

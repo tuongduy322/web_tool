@@ -1,0 +1,286 @@
+/*
+ build css file
+ >>> sass --watch ./assets/styles/style.scss ./assets/styles/style.css
+*/
+/* http://meyerweb.com/eric/tools/css/reset/
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+/* HTML5 display-role reset for older browsers */
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
+  display: block;
+}
+
+body {
+  line-height: 1.3;
+}
+
+ol,
+ul {
+  list-style: none;
+}
+
+blockquote,
+q {
+  quotes: none;
+}
+
+blockquote:before,
+blockquote:after,
+q:before,
+q:after {
+  content: "";
+  content: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.flatpickr-calendar .flatpickr-current-month {
+  font-size: 16px;
+}
+.flatpickr-calendar .flatpickr-current-month .flatpickr-monthDropdown-months {
+  font-weight: 600;
+}
+.flatpickr-calendar .flatpickr-current-month .numInput.cur-year {
+  font-weight: 600;
+}
+
+*,
+html {
+  font-family: "Poppins", sans-serif;
+}
+
+#table-container {
+  margin: 20px;
+  overflow-x: auto;
+}
+#table-container .table-filter {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+}
+#table-container .table-filter .date-picker {
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#table-container .table-filter .date-picker__label {
+  color: #464e5f;
+  font-weight: 600;
+  font-size: 14px;
+}
+#table-container .table-filter .date-picker__label span {
+  color: #f44336;
+}
+#table-container .table-filter .date-picker__input {
+  flex: 1;
+  border: 1.5px solid rgba(0, 0, 0, 0.2588235294);
+  padding-left: 10px;
+  line-height: 36px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #464e5f;
+}
+#table-container .table-filter .date-picker__input:focus-visible {
+  outline: none;
+}
+#table-container .table-filter .date-picker input[type=date]::-webkit-inner-spin-button,
+#table-container .table-filter .date-picker input[type=date]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+#table-container .table-filter .date-picker__box {
+  display: flex;
+  position: relative;
+}
+#table-container .table-filter .date-picker__box .calendar-icon {
+  position: absolute;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  right: 12px;
+  bottom: 0;
+  top: 10px;
+  pointer-events: none;
+}
+#table-container #table {
+  padding: 0 20px;
+  font-size: 14px;
+  border-spacing: 0 12px;
+  min-width: 1080px;
+  width: 100%;
+}
+#table-container #table .head-cell {
+  background-color: #597eaa;
+  color: #ffffff;
+  padding: 4px;
+  text-align: center;
+  border: 1px solid #fff;
+  font-weight: 600;
+  line-height: 24px;
+}
+#table-container #table tbody .row {
+  padding: 12px 0;
+  border-bottom: 1px solid #efefef;
+}
+#table-container #table tbody .row:hover {
+  background-color: #f6f6f6;
+}
+#table-container #table tbody .row .cell {
+  padding: 12px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #464e5f;
+  min-height: 30px;
+}
+#table-container #table tbody .row .cell--left {
+  justify-content: flex-start;
+}
+#table-container #table tbody .row .cell--right {
+  justify-content: flex-end;
+}
+#table-container #table tbody .row .name {
+  max-width: 200px;
+}
+#table-container #table tbody .row .status {
+  height: 30px;
+  width: 100px;
+  border-radius: 8px;
+  background-color: #e5e5e5;
+  color: #5e5e5e;
+  text-align: center;
+  line-height: 30px;
+  font-weight: 600;
+  margin: 0 auto;
+}
+#table-container #table tbody .row .status--approved {
+  background-color: #d3ebd0;
+  color: #229a16;
+}
+#table-container #table tbody .row .status--waiting {
+  color: #b78103;
+  background-color: #f0e5cc;
+}
+#table-container #table tbody .row .reason {
+  max-width: 300px;
+}
+#table-container #table tbody .row .text-red {
+  color: #ff0000;
+}
+#table-container #table tbody .row .text-limit {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  line-height: 1.3;
+}
+
+/*# sourceMappingURL=style.css.map */
