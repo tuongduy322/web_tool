@@ -22,7 +22,7 @@ class WebController extends Controller
     public function tool(Request $request)
     {
         $formDate = $request->input('calendar-from-date', '');
-        $defaultTime = new DateTime('07:50:00');
+        $defaultTime = new DateTime('08:00:00');
         $dataStaff = $staffCodeComplain = [];
 
         if ($token = $this->getAccessToken()) {
