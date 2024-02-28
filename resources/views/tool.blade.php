@@ -87,7 +87,7 @@ $defaultTime = new DateTime('08:00:00');
                     </td>
                     <td>
                         <div class="cell">
-                            <p class="status {{ $item['requestStatus'] === 'APPROVED' ? 'status--approved' : 'status--waiting'}}">{{ $item['requestStatus'] }}</p>
+                            <p class="status {{ $item['requestStatus'] === 'APPROVED' ? 'status--approved' : 'status--waiting'}}">{{ $item['displayStatus'] }}</p>
                         </div>
                     </td>
                     <td>

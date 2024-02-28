@@ -21,7 +21,7 @@ class WebController extends Controller
 
     public function tool(Request $request)
     {
-        $defaultTime = new DateTime('06:00:00');
+        $defaultTime = new DateTime('08:00:00');
         $dataStaff = [];
 
         if ($token = $this->getAccessToken()) {
@@ -46,9 +46,10 @@ class WebController extends Controller
                     'requestCreatedAt' => $itemWFH['createdAt'] ?? '',
                     'isViolateCreatedAt' => !empty($itemWFH['createdAt']) && (new DateTime($itemWFH['createdAt'])) > $defaultTime,
                     'requestStatus' => $itemWFH['statusApproval'] ?? '',
+                    'displayStatus' => $this->getDisplayApproveStatus($itemWFH['statusApproval'] ?? ''),
                     'requestReason' => $itemWFH['reason'] ?? '',
                     'timeCheckIn' => $timeKeepingsStaff[$formDate]['timeCheckIn'] ?? '',
-                    'isViolatetimeCheckIn' => !empty($timeKeepingsStaff[$formDate]['timeCheckIn']) && (new DateTime($timeKeepingsStaff[$formDate]['timeCheckIn'])) > $defaultTime
+                    'isViolatetimeCheckIn' => empty($timeKeepingsStaff[$formDate]['timeCheckIn']) || (new DateTime($timeKeepingsStaff[$formDate]['timeCheckIn'])) > $defaultTime
                 ];
             }
 
@@ -64,6 +65,7 @@ class WebController extends Controller
                     'requestCreatedAt' => $itemOff['createdAt'] ?? '',
                     'isViolateCreatedAt' => !empty($itemOff['createdAt']) && (new DateTime($itemOff['createdAt'])) > $defaultTime,
                     'requestStatus' => $itemOff['statusApproval'] ?? '',
+                    'displayStatus' => $this->getDisplayApproveStatus($itemOff['statusApproval'] ?? ''),
                     'requestReason' => $itemOff['reason'] ?? '',
                     'timeCheckIn' => null,
                     'isViolatetimeCheckIn' => false,
@@ -77,6 +79,19 @@ class WebController extends Controller
         }
 
         return view('tool')->with(['dataStaff' => $dataStaff]);
+    }
+
+    public function getDisplayApproveStatus($status): string
+    {
+        $approveStatus = $status;
+
+        if ($status === 'APPROVED') {
+            $approveStatus = 'Đã duyệt';
+        } elseif ($status === 'PENDING') {
+            $approveStatus = 'Chờ duyệt';
+        }
+
+        return $approveStatus;
     }
 
     public function toolOff(Request $request)
