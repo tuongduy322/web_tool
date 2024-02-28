@@ -1,5 +1,5 @@
 @php
-$defaultTime = new DateTime('06:00:00');
+$defaultTime = new DateTime('08:00:00');
 @endphp
 <!DOCTYPE html>
 <html lang="en">
