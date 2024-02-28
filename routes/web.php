@@ -16,6 +16,6 @@ use App\Http\Controllers\WebController;
 */
 
 Route::controller(WebController::class)->group(function () {
-    Route::get('', 'tool');
+    Route::get('wfh-off', 'tool');
     Route::get('toolOff', 'toolOff');
 });
