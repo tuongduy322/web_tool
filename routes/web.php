@@ -16,7 +16,6 @@ use App\Http\Controllers\WebController;
 */
 
 Route::controller(WebController::class)->group(function () {
-    Route::get('', 'index');
-    Route::get('tool', 'tool');
+    Route::get('', 'tool');
     Route::get('toolOff', 'toolOff');
 });
