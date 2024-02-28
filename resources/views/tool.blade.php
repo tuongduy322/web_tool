@@ -96,7 +96,11 @@ $defaultTime = new DateTime('08:00:00');
                         </div>
                     </td>
                     <td>
+                    @if(isset($item['requestCreatedAt']))
                         <div class="cell text-red">{{ ((new DateTime($item['requestCreatedAt'])) > $defaultTime || (new DateTime($item['timeCheckIn'])) > $defaultTime ) ? 'Có' : 'Không' }}</div>
+                    @else
+                        <div class="cell text-red">Không</div>
+                    @endif
                     </td>
                 </tr>
             @endforeach
