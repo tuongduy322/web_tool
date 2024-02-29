@@ -237,7 +237,6 @@ html {
   justify-content: center;
   font-weight: 600;
   color: #464e5f;
-  min-height: 30px;
 }
 #table-container #table tbody .row .cell--left {
   justify-content: flex-start;
@@ -257,7 +256,6 @@ html {
   text-align: center;
   line-height: 30px;
   font-weight: 600;
-  margin: 0 auto;
 }
 #table-container #table tbody .row .status--approved {
   background-color: #d3ebd0;

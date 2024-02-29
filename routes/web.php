@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\WebController;
@@ -16,7 +17,5 @@ use App\Http\Controllers\WebController;
 */
 
 Route::controller(WebController::class)->group(function () {
-    Route::get('', 'tool');
-    Route::get('wfh-off', 'tool');
-    Route::get('toolOff', 'toolOff');
+    Route::get('', 'tool')->name('home');
 });

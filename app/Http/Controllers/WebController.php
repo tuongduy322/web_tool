@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use DateTime;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 
 class WebController extends Controller
@@ -21,18 +23,23 @@ class WebController extends Controller
 
     public function tool(Request $request)
     {
-        $formDate = $request->input('calendar-from-date', '');
-        $defaultTime = new DateTime('08:00:00');
+        if (!$request->has('calendar-from-date')) {
+            return Redirect::route('home', ['calendar-from-date' => Carbon::today()->toDateString()]);
+        }
+
+        $fromDate = $request->query('calendar-from-date', Carbon::today()->toDateString());
+        $defaultTime = new DateTime($fromDate . ' 08:00:00');
+
         $dataStaff = $staffCodeComplain = [];
 
         if ($token = $this->getAccessToken()) {
 
             // Get list Position
             $positions = $this->listPosition();
-            $timeKeepings = $this->listTimeKeepings();
+            $timeKeepings = $this->listTimeKeepings($fromDate);
 
             // Get data staff OFF
-            $dataOff = $this->getDataStaffOff($token, $request->input('calendar-from-date'), $request->input('calendar-from-date'));
+            $dataOff = $this->getDataStaffOff($token, $fromDate);
             foreach ($dataOff as $itemOff) {
                 $userObjId = $itemOff['userObjId'] ?? [];
 
@@ -53,7 +60,7 @@ class WebController extends Controller
             }
 
             // Get data staff WFH
-            $dataWFH = $this->getDataStaffWFH($token, $request->input('calendar-from-date'), $request->input('calendar-from-date'));
+            $dataWFH = $this->getDataStaffWFH($token, $fromDate);
             foreach ($dataWFH as $itemWFH) {
                 $timeKeepingsStaff = collect($timeKeepings[$itemWFH['userStaffCode']]['timeKeepings'] ?? [])->mapWithKeys(function ($item) {
                     return [$item['dateKeeping'] => $item];
@@ -70,8 +77,8 @@ class WebController extends Controller
                     'requestStatus' => $itemWFH['statusApproval'] ?? '',
                     'displayStatus' => $this->getDisplayApproveStatus($itemWFH['statusApproval'] ?? ''),
                     'requestReason' => $itemWFH['reason'] ?? '',
-                    'timeCheckIn' => $timeKeepingsStaff[$formDate]['timeCheckInRaw'] ?? '',
-                    'isViolatetimeCheckIn' => empty($timeKeepingsStaff[$formDate]['timeCheckInRaw']) || (new DateTime($timeKeepingsStaff[$formDate]['timeCheckInRaw'])) > $defaultTime
+                    'timeCheckIn' => $timeKeepingsStaff[$fromDate]['timeCheckIn'] ?? null,
+                    'isViolatetimeCheckIn' => empty($timeKeepingsStaff[$fromDate]['timeCheckIn']) || (new DateTime($timeKeepingsStaff[$fromDate]['timeCheckIn'])) > $defaultTime
                 ];
             }
 
@@ -82,8 +89,8 @@ class WebController extends Controller
                     $dateKeepingStaff = collect($staff['timeKeepings'] ?? [])->mapWithKeys(function ($item) {
                         return [$item['dateKeeping'] => $item];
                     })->toArray();
-                    if (isset($dateKeepingStaff[$formDate])) {
-                        if (empty($dateKeepingStaff[$formDate]['timeCheckIn'])) {
+                    if (isset($dateKeepingStaff[$fromDate])) {
+                        if (empty($dateKeepingStaff[$fromDate]['timeCheckIn'])) {
                             $dataEmpty[] = [
                                 'staffCode' => $staff['staffCode'] ?? '',
                                 'staffName' => $staff['name'] ?? '',
@@ -94,8 +101,8 @@ class WebController extends Controller
                                 'requestStatus' => '',
                                 'displayStatus' => '',
                                 'requestReason' => '',
-                                'timeCheckIn' => '',
-                                'isViolatetimeCheckIn' => true
+                                'timeCheckIn' => null,
+                                'isViolatetimeCheckIn' => !($dateKeepingStaff[$fromDate]['symbolKeeping'] === 'L')
                             ];
                         } else {
                             $dataCheckIn[] = [
@@ -108,8 +115,8 @@ class WebController extends Controller
                                 'requestStatus' => '',
                                 'displayStatus' => '',
                                 'requestReason' => '',
-                                'timeCheckIn' => $dateKeepingStaff[$formDate]['timeCheckIn'],
-                                'isViolatetimeCheckIn' => (new DateTime($dateKeepingStaff[$formDate]['timeCheckIn'])) > $defaultTime
+                                'timeCheckIn' => $dateKeepingStaff[$fromDate]['timeCheckIn'],
+                                'isViolatetimeCheckIn' => (new DateTime($dateKeepingStaff[$fromDate]['timeCheckIn'])) > $defaultTime
                             ];
                         }
                     }
@@ -139,7 +146,7 @@ class WebController extends Controller
         $dataOff = [];
 
         if ($token = $this->getAccessToken()) {
-            $dataOff = $this->getDataStaffOff($token, $request->input('calendar-from-date'), $request->input('calendar-to-date'));
+            $dataOff = $this->getDataStaffOff($token, $request->input('calendar-from-date'));
         }
 
         return view('Web.toolOff')->with(['dataOFF' => $dataOff]);
@@ -189,12 +196,12 @@ class WebController extends Controller
         return $accessToken;
     }
 
-    public function getDataStaffWFH($token, $fromDate, $endDate)
+    public function getDataStaffWFH($token, $fromDate)
     {
         $result = [];
 
-        if (!empty($fromDate) && !empty($endDate)) {
-            $responseGet = (new Client())->get($this->generateUrl($fromDate, $endDate), [
+        if (!empty($fromDate)) {
+            $responseGet = (new Client())->get($this->generateUrl($fromDate), [
                 'headers' => [
                     'Content-Type' => "application/json",
                     'Authorization' => 'Basic ZHhpbnRlcm5hbF9wbDpnb0R4QDIwMjE=',
@@ -241,32 +248,43 @@ class WebController extends Controller
         return $positions;
     }
 
-    public function listTimeKeepings(): array
+    public function listTimeKeepings($fromDate): array
     {
-        $positions = [];
+        $token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyT2JqSWQiOiI2MDgyODVkMTBlODM3NzNiYzY0YjI3NGUiLCJwb3NpdGlvbk9iaklkIjoiNjJmZjA4YjQ1MGQ3NmExYjUxOTc3M2U1IiwidXNlclBvc2l0aW9uT2JqSWQiOiI2MGIzOGY0NjgwYTJhYTM1MzRmOGRlOTYiLCJ1c2VyTmFtZSI6IlBI4bqgTSBWxaggRFVZIE5BTSIsInVzZXJDb2RlIjoxNzk2LCJlbWFpbCI6Im5hbXB2ZEBydW5zeXN0ZW0ubmV0IiwiZGVwYXJ0bWVudE9iaklkIjoiNjBiNjBjMWY5ODhkOTkxM2M0OWI4NmQyIiwiYnJhbmNoQ29kZSI6IkNOSENNIiwiYnJhbmNoTmFtZSI6IkNoaSBuaMOhbmggVFAuIEjhu5MgQ2jDrSBNaW5oIiwiYnJhbmNoT2JqSWQiOiI2MDdjZTI0YWU3ZmJkYjMxYWM1ZWQyZDEiLCJ1c2VyU3RhdHVzIjoiT2ZmaWNpYWwiLCJpYXQiOjE3MDg1NjM2MzgsImV4cCI6MTcwOTE2ODQzOH0.FW34c3yB1gyxKRK0ei1Fwo2fWMCgIp4L7HB9fdTDjLk';
+        $result = [];
+        $client = new Client();
 
-        $contentFilePos = Storage::disk('public')->get('time.json');
-        if ($contentFilePos) {
-            $positionData = json_decode($contentFilePos, true) ?? [];
-            if (array_key_exists('data', $positionData)) {
-                $positions = collect($positionData['data']['items'] ?? [])->mapWithKeys(function ($item) {
-                    return [$item['staffCode'] => $item];
-                })->toArray();
+        if (!empty($fromDate)) {
+            $responseGet = $client->get($this->generateTimeKeepings($fromDate), [
+                'headers' => [
+                    'Content-Type' => "application/json",
+                    'Authorization' => 'Basic ZHhpbnRlcm5hbF9wbDpnb0R4QDIwMjE=',
+                    'x-access-token' => $token
+                ]
+            ]);
+
+            if ($responseGet->getStatusCode() == 200) {
+                $timeData = json_decode($responseGet->getBody(), true) ?? [];
+                if (array_key_exists('data', $timeData)) {
+                    $result = collect($timeData['data']['items'] ?? [])->mapWithKeys(function ($item) {
+                        return [$item['staffCode'] => $item];
+                    })->toArray();
+                }
             }
         }
 
-        return $positions;
+        return $result;
     }
 
-    public function getDataStaffOff($token, $fromDate, $endDate): array
+    public function getDataStaffOff($token, $fromDate): array
     {
         $listDeptID = ['6305f89d54fd8d0284bc8094', '6305f86a54fd8d0284bc7fe3', '60b60c1f988d9913c49b86d2'];
         $reportObjId = ['608285d10e83773bc64b271d', '608285d10e83773bc64b274e'];
         $result = [];
         $client = new Client();
 
-        if (!empty($fromDate) && !empty($endDate)) {
-            $responseGet = $client->get($this->generateUrlOff($fromDate, $endDate), [
+        if (!empty($fromDate)) {
+            $responseGet = $client->get($this->generateUrlOff($fromDate), [
                 'headers' => [
                     'Content-Type' => "application/json",
                     'Authorization' => 'Basic ZHhpbnRlcm5hbF9wbDpnb0R4QDIwMjE=',
@@ -294,20 +312,31 @@ class WebController extends Controller
         return $result;
     }
 
-    public function generateUrl($fromDate, $endDate)
+    public function generateUrl($fromDate)
     {
         $departmentObjId = '60b60c1f988d9913c49b86d2';
         $apiLink = 'https://api-create.runsystem.info/auth/staff-wfh/listByManager';
-        $query = "endDate=$endDate&fromDate=$fromDate&limit=300&status=All&statusApproval=%5Bobject%20Object%5D&toDate=1709225999999&departmentObjId=$departmentObjId";
+        $query = "endDate=$fromDate&fromDate=$fromDate&limit=300&status=All&statusApproval=%5Bobject%20Object%5D&toDate=1709225999999&departmentObjId=$departmentObjId";
 
         return $apiLink . '?' . $query;
     }
 
-    public function generateUrlOff($startDate, $endDate)
+    public function generateUrlOff($date)
     {
 
         $apiLink = 'https://api-create.runsystem.info/auth/staff-attendance/personalStaffAttendance';
-        $query = "endDate=$endDate&page=1&startDate=$startDate&status=All&limit=500";
+        $query = "endDate=$date&page=1&startDate=$date&status=All&limit=500";
+
+        return $apiLink . '?' . $query;
+    }
+
+    public function generateTimeKeepings($date)
+    {
+        $departmentObjId = '60b60c1f988d9913c49b86d2';
+        $dateTime = DateTime::createFromFormat('Y-m-d', $date);
+        $closingMonth = $dateTime->format('mY');
+        $apiLink = 'https://api-create.runsystem.info/auth/time-keepings/listByManager';
+        $query = "branch&closingMonth=$closingMonth&departmentObjId=$departmentObjId&limit=100&name=&page=1&project=%5Bobject%20Object%5D&search=&sortKey=createdAt&sortOrder=-1&status";
 
         return $apiLink . '?' . $query;
     }

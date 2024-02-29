@@ -7,7 +7,7 @@ $defaultTime = new DateTime('08:00:00');
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="/web-tool/assets/styles/style.css" />
-    <meta name="keywords" content="WFH, OFF, LATE" />
+    <meta name="keywords" content="Working time management" />
 
     <!-- DATE PICKER LIBRARY -->
     <link
@@ -22,7 +22,8 @@ $defaultTime = new DateTime('08:00:00');
         href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
         rel="stylesheet"
     />
-    <title>WFH, OFF & LATE</title>
+    <title>Working time management</title>
+    <link rel="icon" type="image/x-icon" href="/web-tool/favicon.png"/>
 </head>
 <body>
     <div id="table-container">
@@ -63,10 +64,10 @@ $defaultTime = new DateTime('08:00:00');
             @foreach($dataStaff as $key => $item)
                 <tr class="row">
                     <td>
-                        <div class="cell cell--right">{{ $key + 1 }}</div>
+                        <div class="cell cell--left">{{ $key + 1 }}</div>
                     </td>
                     <td>
-                        <div class="cell">{{ $item['staffCode'] }}</div>
+                        <div class="cell cell--left">{{ $item['staffCode'] }}</div>
                     </td>
                     <td>
                         <div class="cell cell--left">
@@ -80,13 +81,13 @@ $defaultTime = new DateTime('08:00:00');
                         <div class="cell cell--left">{{ $item['requestType'] }}</div>
                     </td>
                     <td>
-                        <div class="cell cell--left {{ $item['isViolateCreatedAt'] ? 'text-red' : '' }}">{{ $item['requestCreatedAt'] }}</div>
+                        <div class="cell cell--left {{ $item['isViolateCreatedAt'] ? 'text-red' : '' }}">{{ $item['requestCreatedAt'] ?? 'N/A' }}</div>
                     </td>
                     <td>
-                        <div class="cell cell--left {{ $item['isViolatetimeCheckIn'] ? 'text-red' : '' }}">{{ $item['timeCheckIn'] }}</div>
+                        <div class="cell cell--left {{ $item['isViolatetimeCheckIn'] ? 'text-red' : '' }}">{{ $item['timeCheckIn'] ?? 'N/A' }}</div>
                     </td>
                     <td>
-                        <div class="cell">
+                        <div class="cell cell--left">
                             @if(!empty($item['displayStatus']))
                             <p class="status {{ $item['requestStatus'] === 'APPROVED' ? 'status--approved' : 'status--waiting'}}">{{ $item['displayStatus'] }}</p>
                             @endif
@@ -98,7 +99,11 @@ $defaultTime = new DateTime('08:00:00');
                         </div>
                     </td>
                     <td>
-                        <div class="cell {{ $item['isViolateCreatedAt'] || $item['isViolatetimeCheckIn'] ? 'text-red' : '' }}">{{ $item['isViolateCreatedAt'] || $item['isViolatetimeCheckIn'] ? 'Có' : 'Không' }}</div>
+                        @if($item['isViolateCreatedAt'] || $item['isViolatetimeCheckIn'])
+                            <div class="cell cell--left text-red" style="font-size: 20px">Có</div>
+                        @else
+                            <div class="cell cell--left">Không</div>
+                        @endif
                     </td>
                 </tr>
             @endforeach
