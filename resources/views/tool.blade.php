@@ -102,14 +102,21 @@ $defaultTime = new DateTime('08:45:00');
                     <td>
                         @if (!empty($item['fromDate']))
                             @php
-                                $date = '';
+                                $date = $time = '';
                                 $fromDate = $item['fromDate'] ?? '';
                                 if (!empty($fromDate)) {
-                                    list($date) = explode(' ', $fromDate);
+                                    $arrFromDate = explode(' ', $fromDate);
+                                    if (count($arrFromDate) > 1) {
+                                        list($date, $time) = explode(' ', $fromDate);
+                                    } else {
+                                        list($date) = explode(' ', $fromDate);
+                                        $time = '08:00:00';
+                                    }
                                 }
                             @endphp
                             <div class="cell cell--left cell-date">
                                 <span>{{ $date ?? '' }}</span>
+                                <span>{{ $time ?? '' }}</span>
                             </div>
                         @else
                             <div class="cell cell--left"></div>
@@ -118,14 +125,22 @@ $defaultTime = new DateTime('08:45:00');
                     <td>
                         @if (!empty($item['endDate']))
                             @php
-                                $date = '';
+                                $date = $time = '';
                                 $endDate = $item['endDate'] ?? '';
                                 if (!empty($endDate)) {
+                                    $arrEndDate = explode(' ', $endDate);
+                                    if (count($arrEndDate) > 1) {
+                                        list($date, $time) = explode(' ', $endDate);
+                                    } else {
+                                        list($date) = explode(' ', $endDate);
+                                        $time = '17:00:00';
+                                    }
                                     list($date) = explode(' ', $endDate);
                                 }
                             @endphp
                             <div class="cell cell--left cell-date">
                                 <span>{{ $date ?? '' }}</span>
+                                <span>{{ $time ?? '' }}</span>
                             </div>
                         @else
                             <div class="cell cell--left"></div>
