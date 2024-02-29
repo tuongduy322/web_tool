@@ -24,10 +24,12 @@ class WebController extends Controller
 
     public function tool(Request $request)
     {
+        // [validate]
         if (!$request->has('calendar-from-date')) {
             return Redirect::route('home', ['calendar-from-date' => Carbon::today()->toDateString()]);
         }
 
+        // [validate]
         try {
             $request->validate(['calendar-from-date' => 'required|date|date_format:Y-m-d',]);
         } catch (ValidationException $exception) {
@@ -36,6 +38,12 @@ class WebController extends Controller
 
         $fromDate = $request->query('calendar-from-date', Carbon::today()->toDateString());
         $defaultTime = new DateTime($fromDate . ' 08:00:00');
+
+        // [validate]
+        $dayOfWeek = date('N', strtotime($fromDate));
+        if ($dayOfWeek == 6 || $dayOfWeek == 7) {
+            return Redirect::route('home', ['calendar-from-date' => Carbon::today()->toDateString()]);
+        }
 
         $dataStaff = $staffCodeComplain = [];
 

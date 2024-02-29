@@ -10,6 +10,11 @@ const fromDateFp = flatpickr("#calendar-from-date", {
     allowInput: false,
     minDate: firstDayOfMonth,
     maxDate: lastDayOfMonth,
+    disable: [
+        function(date) {
+            return (date.getDay() === 6 || date.getDay() === 0);
+        }
+    ]
 });
 
 // const toDateFp = flatpickr("#calendar-to-date", {
