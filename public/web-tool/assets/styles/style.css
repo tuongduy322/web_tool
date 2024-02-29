@@ -156,6 +156,17 @@ html {
   margin: 20px;
   overflow-x: auto;
 }
+
+#table-container #table tbody .row div.cell-date {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    height: 40px;
+}
+
+#table-container td {
+    vertical-align: middle;
+}
 #table-container .table-filter {
   margin-bottom: 16px;
   display: flex;

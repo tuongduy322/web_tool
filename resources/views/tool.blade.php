@@ -1,5 +1,5 @@
 @php
-$defaultTime = new DateTime('08:00:00');
+$defaultTime = new DateTime('08:45:00');
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -55,10 +55,12 @@ $defaultTime = new DateTime('08:00:00');
             <th class="head-cell">Vị trí công việc</th>
             <th class="head-cell">Loại</th>
             <th class="head-cell">Ngày gửi</th>
+            <th class="head-cell">Từ ngày</th>
+            <th class="head-cell">Đến ngày</th>
             <th class="head-cell">Giờ checkin</th>
             <th class="head-cell">Trạng thái</th>
             <th class="head-cell">Lý do</th>
-            <th class="head-cell">Phạt?</th>
+            <th class="head-cell">Phạt? (10AM)</th>
             </thead>
             <tbody>
             @foreach($dataStaff as $key => $item)
@@ -81,10 +83,70 @@ $defaultTime = new DateTime('08:00:00');
                         <div class="cell cell--left">{{ $item['requestType'] }}</div>
                     </td>
                     <td>
-                        <div class="cell cell--left {{ $item['isViolateCreatedAt'] ? 'text-red' : '' }}">{{ $item['requestCreatedAt'] ?? 'N/A' }}</div>
+                        @if (!empty($item['requestCreatedAt']))
+                            @php
+                                $date = $time = '';
+                                $requestCreatedAt = $item['requestCreatedAt'] ?? [];
+                                if (!empty($requestCreatedAt)) {
+                                    list($date, $time) = explode(' ', $requestCreatedAt);
+                                }
+                            @endphp
+                            <div class="cell cell--left cell-date {{ $item['isViolateCreatedAt'] ? 'text-red' : '' }}">
+                                <span>{{ $date ?? '' }}</span>
+                                <span>{{ $time ?? '' }}</span>
+                            </div>
+                        @else
+                            <div class="cell cell--left {{ $item['isViolateCreatedAt'] ? 'text-red' : '' }}"></div>
+                        @endif
                     </td>
                     <td>
-                        <div class="cell cell--left {{ $item['isViolatetimeCheckIn'] ? 'text-red' : '' }}">{{ $item['timeCheckIn'] ?? 'N/A' }}</div>
+                        @if (!empty($item['fromDate']))
+                            @php
+                                $date = '';
+                                $fromDate = $item['fromDate'] ?? '';
+                                if (!empty($fromDate)) {
+                                    list($date) = explode(' ', $fromDate);
+                                }
+                            @endphp
+                            <div class="cell cell--left cell-date">
+                                <span>{{ $date ?? '' }}</span>
+                            </div>
+                        @else
+                            <div class="cell cell--left"></div>
+                        @endif
+                    </td>
+                    <td>
+                        @if (!empty($item['endDate']))
+                            @php
+                                $date = '';
+                                $endDate = $item['endDate'] ?? '';
+                                if (!empty($endDate)) {
+                                    list($date) = explode(' ', $endDate);
+                                }
+                            @endphp
+                            <div class="cell cell--left cell-date">
+                                <span>{{ $date ?? '' }}</span>
+                            </div>
+                        @else
+                            <div class="cell cell--left"></div>
+                        @endif
+                    </td>
+                    <td>
+                        @if (!empty($item['timeCheckIn']))
+                            @php
+                                $date = $time = '';
+                                $requestCreatedAt = $item['timeCheckIn'] ?? [];
+                                if (!empty($requestCreatedAt)) {
+                                    list($dateCheckIn, $timeCheckIn) = explode(' ', $requestCreatedAt);
+                                }
+                            @endphp
+                            <div class="cell cell--left cell-date {{ $item['isViolatetimeCheckIn'] ? 'text-red' : '' }}">
+                                <span>{{ $dateCheckIn ?? '' }}</span>
+                                <span>{{ $timeCheckIn ?? '' }}</span>
+                            </div>
+                        @else
+                            <div class="cell cell--left {{ $item['isViolatetimeCheckIn'] ? 'text-red' : '' }}">N/A</div>
+                        @endif
                     </td>
                     <td>
                         <div class="cell cell--left">
@@ -99,11 +161,15 @@ $defaultTime = new DateTime('08:00:00');
                         </div>
                     </td>
                     <td>
+                    @if(\Carbon\Carbon::now()->setTimezone('Asia/Ho_Chi_Minh')->format('H:i:s') < '10:00:00')
+                        <div class="cell cell--left"></div>
+                    @else
                         @if($item['isViolateCreatedAt'] || $item['isViolatetimeCheckIn'])
-                            <div class="cell cell--left text-red" style="font-size: 20px">Có</div>
+                        <div class="cell cell--left text-red">Có</div>
                         @else
-                            <div class="cell cell--left">Không</div>
+                        <div class="cell cell--left">-</div>
                         @endif
+                    @endif
                     </td>
                 </tr>
             @endforeach

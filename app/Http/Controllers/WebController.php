@@ -8,6 +8,7 @@ use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class WebController extends Controller
 {
@@ -27,6 +28,12 @@ class WebController extends Controller
             return Redirect::route('home', ['calendar-from-date' => Carbon::today()->toDateString()]);
         }
 
+        try {
+            $request->validate(['calendar-from-date' => 'required|date|date_format:Y-m-d',]);
+        } catch (ValidationException $exception) {
+            abort(404);
+        }
+
         $fromDate = $request->query('calendar-from-date', Carbon::today()->toDateString());
         $defaultTime = new DateTime($fromDate . ' 08:00:00');
 
@@ -42,15 +49,23 @@ class WebController extends Controller
             $dataOff = $this->getDataStaffOff($token, $fromDate);
             foreach ($dataOff as $itemOff) {
                 $userObjId = $itemOff['userObjId'] ?? [];
-
+                $staffPosition = $this->getPositionByStaffCode($userObjId['staffCode'] ?? '', $positions);
                 $staffCodeComplain[] = $userObjId['staffCode'] ?? '';
+                $isViolateCreatedAt = !empty($itemOff['createdAt']) && (new DateTime($itemOff['createdAt'])) > $defaultTime;
+
+                if ($staffPosition === 'Học việc') {
+                    $isViolateCreatedAt = false;
+                }
+
                 $dataStaff[] = [
                     'staffCode' => $userObjId['staffCode'] ?? '',
                     'staffName' => $userObjId['name'] ?? '',
-                    'staffPosition' => $this->getPositionByStaffCode($userObjId['staffCode'] ?? '', $positions),
+                    'staffPosition' => $staffPosition,
                     'requestType' => 'Nghỉ phép',
+                    'fromDate' => $itemOff['fromDate'] ?? '',
+                    'endDate' => $itemOff['endDate'] ?? '',
                     'requestCreatedAt' => $itemOff['createdAt'] ?? '',
-                    'isViolateCreatedAt' => !empty($itemOff['createdAt']) && (new DateTime($itemOff['createdAt'])) > $defaultTime,
+                    'isViolateCreatedAt' => $isViolateCreatedAt,
                     'requestStatus' => $itemOff['statusApproval'] ?? '',
                     'displayStatus' => $this->getDisplayApproveStatus($itemOff['statusApproval'] ?? ''),
                     'requestReason' => $itemOff['reason'] ?? '',
@@ -67,18 +82,29 @@ class WebController extends Controller
                 })->toArray();
 
                 $staffCodeComplain[] = $itemWFH['userStaffCode'] ?? '';
+                $staffPosition = $this->getPositionByStaffCode($itemWFH['userStaffCode'] ?? '', $positions);
+                $isViolateCreatedAt = !empty($itemWFH['createdAt']) && (new DateTime($itemWFH['createdAt'])) > $defaultTime;
+                $isViolatetimeCheckIn = empty($timeKeepingsStaff[$fromDate]['timeCheckIn']) || (new DateTime($timeKeepingsStaff[$fromDate]['timeCheckIn'])) > $defaultTime;
+
+                if ($staffPosition === 'Học việc') {
+                    $isViolateCreatedAt = false;
+                    $isViolatetimeCheckIn = false;
+                }
+
                 $dataStaff[] = [
                     'staffCode' => $itemWFH['userStaffCode'] ?? '',
                     'staffName' => $itemWFH['username'] ?? '',
-                    'staffPosition' => $this->getPositionByStaffCode($itemWFH['userStaffCode'] ?? '', $positions),
+                    'staffPosition' => $staffPosition,
                     'requestType' => 'WFH',
+                    'fromDate' => $itemWFH['fromDate'] ?? '',
+                    'endDate' => $itemWFH['endDate'] ?? '',
                     'requestCreatedAt' => $itemWFH['createdAt'] ?? '',
-                    'isViolateCreatedAt' => !empty($itemWFH['createdAt']) && (new DateTime($itemWFH['createdAt'])) > $defaultTime,
+                    'isViolateCreatedAt' => $isViolateCreatedAt,
                     'requestStatus' => $itemWFH['statusApproval'] ?? '',
                     'displayStatus' => $this->getDisplayApproveStatus($itemWFH['statusApproval'] ?? ''),
                     'requestReason' => $itemWFH['reason'] ?? '',
                     'timeCheckIn' => $timeKeepingsStaff[$fromDate]['timeCheckIn'] ?? null,
-                    'isViolatetimeCheckIn' => empty($timeKeepingsStaff[$fromDate]['timeCheckIn']) || (new DateTime($timeKeepingsStaff[$fromDate]['timeCheckIn'])) > $defaultTime
+                    'isViolatetimeCheckIn' => $isViolatetimeCheckIn
                 ];
             }
 
@@ -91,32 +117,48 @@ class WebController extends Controller
                     })->toArray();
                     if (isset($dateKeepingStaff[$fromDate])) {
                         if (empty($dateKeepingStaff[$fromDate]['timeCheckIn'])) {
+                            $isViolatetimeCheckIn = !($dateKeepingStaff[$fromDate]['symbolKeeping'] === 'L');
+
+                            if ($staff['positionName'] === 'Học việc') {
+                                $isViolatetimeCheckIn = false;
+                            }
+
                             $dataEmpty[] = [
                                 'staffCode' => $staff['staffCode'] ?? '',
                                 'staffName' => $staff['name'] ?? '',
                                 'staffPosition' => $staff['positionName'] ?? '',
                                 'requestType' => '-',
+                                'fromDate' => '',
+                                'endDate' => '',
                                 'requestCreatedAt' => '',
                                 'isViolateCreatedAt' => false,
                                 'requestStatus' => '',
                                 'displayStatus' => '',
                                 'requestReason' => '',
                                 'timeCheckIn' => null,
-                                'isViolatetimeCheckIn' => !($dateKeepingStaff[$fromDate]['symbolKeeping'] === 'L')
+                                'isViolatetimeCheckIn' => $isViolatetimeCheckIn
                             ];
                         } else {
+                            $isViolatetimeCheckIn = (new DateTime($dateKeepingStaff[$fromDate]['timeCheckIn'])) > $defaultTime;
+
+                            if ($staff['positionName'] === 'Học việc') {
+                                $isViolatetimeCheckIn = false;
+                            }
+
                             $dataCheckIn[] = [
                                 'staffCode' => $staff['staffCode'] ?? '',
                                 'staffName' => $staff['name'] ?? '',
                                 'staffPosition' => $staff['positionName'] ?? '',
                                 'requestType' => 'Bình thường',
+                                'fromDate' => '',
+                                'endDate' => '',
                                 'requestCreatedAt' => '',
                                 'isViolateCreatedAt' => false,
                                 'requestStatus' => '',
                                 'displayStatus' => '',
                                 'requestReason' => '',
                                 'timeCheckIn' => $dateKeepingStaff[$fromDate]['timeCheckIn'],
-                                'isViolatetimeCheckIn' => (new DateTime($dateKeepingStaff[$fromDate]['timeCheckIn'])) > $defaultTime
+                                'isViolatetimeCheckIn' => $isViolatetimeCheckIn
                             ];
                         }
                     }
@@ -248,9 +290,26 @@ class WebController extends Controller
         return $positions;
     }
 
+//    public function listTimeKeepings(): array
+//    {
+//        $positions = [];
+//
+//        $contentFilePos = Storage::disk('public')->get('time.json');
+//        if ($contentFilePos) {
+//            $positionData = json_decode($contentFilePos, true) ?? [];
+//            if (array_key_exists('data', $positionData)) {
+//                $positions = collect($positionData['data']['items'] ?? [])->mapWithKeys(function ($item) {
+//                    return [$item['staffCode'] => $item];
+//                })->toArray();
+//            }
+//        }
+//
+//        return $positions;
+//    }
+
     public function listTimeKeepings($fromDate): array
     {
-        $token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyT2JqSWQiOiI2MDgyODVkMTBlODM3NzNiYzY0YjI3NGUiLCJwb3NpdGlvbk9iaklkIjoiNjJmZjA4YjQ1MGQ3NmExYjUxOTc3M2U1IiwidXNlclBvc2l0aW9uT2JqSWQiOiI2MGIzOGY0NjgwYTJhYTM1MzRmOGRlOTYiLCJ1c2VyTmFtZSI6IlBI4bqgTSBWxaggRFVZIE5BTSIsInVzZXJDb2RlIjoxNzk2LCJlbWFpbCI6Im5hbXB2ZEBydW5zeXN0ZW0ubmV0IiwiZGVwYXJ0bWVudE9iaklkIjoiNjBiNjBjMWY5ODhkOTkxM2M0OWI4NmQyIiwiYnJhbmNoQ29kZSI6IkNOSENNIiwiYnJhbmNoTmFtZSI6IkNoaSBuaMOhbmggVFAuIEjhu5MgQ2jDrSBNaW5oIiwiYnJhbmNoT2JqSWQiOiI2MDdjZTI0YWU3ZmJkYjMxYWM1ZWQyZDEiLCJ1c2VyU3RhdHVzIjoiT2ZmaWNpYWwiLCJpYXQiOjE3MDg1NjM2MzgsImV4cCI6MTcwOTE2ODQzOH0.FW34c3yB1gyxKRK0ei1Fwo2fWMCgIp4L7HB9fdTDjLk';
+        $token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyT2JqSWQiOiI2MDgyODVkMTBlODM3NzNiYzY0YjI3NGUiLCJwb3NpdGlvbk9iaklkIjoiNjJmZjA4YjQ1MGQ3NmExYjUxOTc3M2U1IiwidXNlclBvc2l0aW9uT2JqSWQiOiI2MGIzOGY0NjgwYTJhYTM1MzRmOGRlOTYiLCJ1c2VyTmFtZSI6IlBI4bqgTSBWxaggRFVZIE5BTSIsInVzZXJDb2RlIjoxNzk2LCJlbWFpbCI6Im5hbXB2ZEBydW5zeXN0ZW0ubmV0IiwiZGVwYXJ0bWVudE9iaklkIjoiNjBiNjBjMWY5ODhkOTkxM2M0OWI4NmQyIiwiYnJhbmNoQ29kZSI6IkNOSENNIiwiYnJhbmNoTmFtZSI6IkNoaSBuaMOhbmggVFAuIEjhu5MgQ2jDrSBNaW5oIiwiYnJhbmNoT2JqSWQiOiI2MDdjZTI0YWU3ZmJkYjMxYWM1ZWQyZDEiLCJ1c2VyU3RhdHVzIjoiT2ZmaWNpYWwiLCJpYXQiOjE3MDkxNjg0NjQsImV4cCI6MTcwOTc3MzI2NH0.H5Oea6UZO0Ql956RiAGFQtSTv57-qjYcHcZcJfA9bxs';
         $result = [];
         $client = new Client();
 
