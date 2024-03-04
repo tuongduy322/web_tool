@@ -1,5 +1,6 @@
 @php
-$defaultTime = new DateTime('08:45:00');
+    $defaultTime = new DateTime(request()->input('calendar-from-date'));
+    $showTime = new DateTime();
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -176,7 +177,7 @@ $defaultTime = new DateTime('08:45:00');
                         </div>
                     </td>
                     <td>
-                    @if(\Carbon\Carbon::now()->setTimezone('Asia/Ho_Chi_Minh')->format('H:i:s') < '10:00:00')
+                    @if($defaultTime->format('Y-m-d') >= $showTime->format('Y-m-d') && \Carbon\Carbon::now()->setTimezone('Asia/Ho_Chi_Minh')->format('H:i:s') < '10:00:00')
                         <div class="cell cell--left"></div>
                     @else
                         @if($item['isViolateCreatedAt'] || $item['isViolatetimeCheckIn'])

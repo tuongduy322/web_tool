@@ -42,7 +42,7 @@ class WebController extends Controller
         // [validate]
         $dayOfWeek = date('N', strtotime($fromDate));
         if ($dayOfWeek == 6 || $dayOfWeek == 7) {
-            return Redirect::route('home', ['calendar-from-date' => Carbon::today()->toDateString()]);
+            abort(404);
         }
 
         $dataStaff = $staffCodeComplain = [];
@@ -298,49 +298,18 @@ class WebController extends Controller
         return $positions;
     }
 
-//    public function listTimeKeepings(): array
-//    {
-//        $positions = [];
-//
-//        $contentFilePos = Storage::disk('public')->get('time.json');
-//        if ($contentFilePos) {
-//            $positionData = json_decode($contentFilePos, true) ?? [];
-//            if (array_key_exists('data', $positionData)) {
-//                $positions = collect($positionData['data']['items'] ?? [])->mapWithKeys(function ($item) {
-//                    return [$item['staffCode'] => $item];
-//                })->toArray();
-//            }
-//        }
-//
-//        return $positions;
-//    }
-
     public function listTimeKeepings($fromDate): array
     {
-        $token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyT2JqSWQiOiI2MDgyODVkMTBlODM3NzNiYzY0YjI3NGUiLCJwb3NpdGlvbk9iaklkIjoiNjJmZjA4YjQ1MGQ3NmExYjUxOTc3M2U1IiwidXNlclBvc2l0aW9uT2JqSWQiOiI2MGIzOGY0NjgwYTJhYTM1MzRmOGRlOTYiLCJ1c2VyTmFtZSI6IlBI4bqgTSBWxaggRFVZIE5BTSIsInVzZXJDb2RlIjoxNzk2LCJlbWFpbCI6Im5hbXB2ZEBydW5zeXN0ZW0ubmV0IiwiZGVwYXJ0bWVudE9iaklkIjoiNjBiNjBjMWY5ODhkOTkxM2M0OWI4NmQyIiwiYnJhbmNoQ29kZSI6IkNOSENNIiwiYnJhbmNoTmFtZSI6IkNoaSBuaMOhbmggVFAuIEjhu5MgQ2jDrSBNaW5oIiwiYnJhbmNoT2JqSWQiOiI2MDdjZTI0YWU3ZmJkYjMxYWM1ZWQyZDEiLCJ1c2VyU3RhdHVzIjoiT2ZmaWNpYWwiLCJpYXQiOjE3MDkxNjg0NjQsImV4cCI6MTcwOTc3MzI2NH0.H5Oea6UZO0Ql956RiAGFQtSTv57-qjYcHcZcJfA9bxs';
-        $result = [];
-        $client = new Client();
+        $yearMonth = DateTime::createFromFormat('Y-m-d', $fromDate)->format('Y-m');
+        $pathFileTimeKeepings = '/' . $yearMonth . '/' . 'checkin-time.json';
 
-        if (!empty($fromDate)) {
-            $responseGet = $client->get($this->generateTimeKeepings($fromDate), [
-                'headers' => [
-                    'Content-Type' => "application/json",
-                    'Authorization' => 'Basic ZHhpbnRlcm5hbF9wbDpnb0R4QDIwMjE=',
-                    'x-access-token' => $token
-                ]
-            ]);
-
-            if ($responseGet->getStatusCode() == 200) {
-                $timeData = json_decode($responseGet->getBody(), true) ?? [];
-                if (array_key_exists('data', $timeData)) {
-                    $result = collect($timeData['data']['items'] ?? [])->mapWithKeys(function ($item) {
-                        return [$item['staffCode'] => $item];
-                    })->toArray();
-                }
+        if (Storage::disk('public')->exists($pathFileTimeKeepings)) {
+            if ($contentFile = Storage::disk('public')->get($pathFileTimeKeepings)) {
+                return json_decode($contentFile, true) ?? [];
             }
         }
 
-        return $result;
+        return [];
     }
 
     public function getDataStaffOff($token, $fromDate): array
@@ -393,17 +362,6 @@ class WebController extends Controller
 
         $apiLink = 'https://api-create.runsystem.info/auth/staff-attendance/personalStaffAttendance';
         $query = "endDate=$date&page=1&startDate=$date&status=All&limit=500";
-
-        return $apiLink . '?' . $query;
-    }
-
-    public function generateTimeKeepings($date)
-    {
-        $departmentObjId = '60b60c1f988d9913c49b86d2';
-        $dateTime = DateTime::createFromFormat('Y-m-d', $date);
-        $closingMonth = $dateTime->format('mY');
-        $apiLink = 'https://api-create.runsystem.info/auth/time-keepings/listByManager';
-        $query = "branch&closingMonth=$closingMonth&departmentObjId=$departmentObjId&limit=100&name=&page=1&project=%5Bobject%20Object%5D&search=&sortKey=createdAt&sortOrder=-1&status";
 
         return $apiLink . '?' . $query;
     }
