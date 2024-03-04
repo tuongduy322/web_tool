@@ -162,6 +162,7 @@ html {
     align-items: flex-start;
     justify-content: space-between;
     height: 40px;
+    min-width: 95px;
 }
 
 #table-container td {
