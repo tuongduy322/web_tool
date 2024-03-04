@@ -6,7 +6,6 @@ use DateTime;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -21,9 +20,6 @@ class GetDataTimeKeepingsStaff extends Command
      */
     public function handle(): bool
     {
-
-        Log::error('[Command] get-data-time-keepings-staff: Running.');
-
         $date = now()->format('Y-m-d');
         $validator = Validator::make(['date' => $date], [
             'date' => 'date_format:Y-m-d',
@@ -39,8 +35,6 @@ class GetDataTimeKeepingsStaff extends Command
             $pathFile = '/' . DateTime::createFromFormat('Y-m-d', $date)->format('Y-m') . '/' . 'checkin-time.json';
             if (Storage::disk('public')->put($pathFile, json_encode($data))) {
                 $this->info(Storage::disk('public')->path($pathFile));
-
-                Log::error('[Command] get-data-time-keepings-staff: Success.');
                 return true;
             }
         }
@@ -48,8 +42,6 @@ class GetDataTimeKeepingsStaff extends Command
         $this->error('Fail to get data from api tool-create: ' . $date);
         $this->error('Link api: ' . $this->generateTimeKeepings($date));
         $this->error('Token: ' . env('ACCOUNT_TOKEN', ''));
-
-        Log::error('[Command] get-data-time-keepings-staff: Fail.');
         return false;
     }
 
