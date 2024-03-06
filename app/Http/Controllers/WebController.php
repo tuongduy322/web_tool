@@ -178,6 +178,17 @@ class WebController extends Controller
             $dataStaff = array_merge($dataStaff, $dataCheckIn, $dataEmpty);
         }
 
+        $countPunished = $countNotPunished = 0;
+        foreach ($dataStaff as $itemStaff) {
+            if ($itemStaff['isViolatetimeCheckIn'] || $itemStaff['isViolateCreatedAt']) {
+                $countPunished++;
+            }
+
+            if (!$itemStaff['isViolatetimeCheckIn'] && !$itemStaff['isViolateCreatedAt']) {
+                $countNotPunished++;
+            }
+        }
+
         $isViolate = $request->query('filter', 'Tất cả');
         if ($isViolate !== 'Tất cả') {
             $dataStaff = collect($dataStaff)->filter(function ($item) use ($isViolate) {
@@ -189,7 +200,11 @@ class WebController extends Controller
             })->toArray();
         }
 
-        return view('tool')->with(['dataStaff' => $dataStaff]);
+        return view('tool')->with([
+            'dataStaff' => $dataStaff,
+            'countPunished' => $countPunished,
+            'countNotPunished' => $countNotPunished
+        ]);
     }
 
     public function getDisplayApproveStatus($status): string

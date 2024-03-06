@@ -424,7 +424,7 @@ html {
 
 .tooltip {
     position: relative;
-    display: inline-block;
+    /*display: inline-block;*/
     cursor: pointer;
 }
 
@@ -437,14 +437,36 @@ html {
     border-radius: 6px;
     position: absolute;
     z-index: 1;
-    bottom: 125%;
+    top: 0;
     left: 0;
     opacity: 0;
-    transition: opacity 0.3s;
-    padding: 12px 11px
+    transition: opacity 0.3s, transform 0.3s;
+    padding: 12px 11px;
+    transform: translateY(-100%);
 }
 
 .tooltip:hover .tooltiptext {
     visibility: visible;
     opacity: 1;
+}
+
+.group-select-box {
+    display: flex;
+    align-items: center;
+}
+
+.count-filter {
+    margin-left: 20px;
+}
+
+.count-filter #label-punished {
+    color: #ff0000;
+    font-weight: 600;
+    font-size: 20px
+}
+
+.count-filter #label-not-punished {
+    color: #29b71b;
+    font-weight: 600;
+    font-size: 20px
 }
