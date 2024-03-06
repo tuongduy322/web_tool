@@ -41,7 +41,6 @@ class GetDataTimeKeepingsStaff extends Command
 
         $this->error('Fail to get data from api tool-create: ' . $date);
         $this->error('Link api: ' . $this->generateTimeKeepings($date));
-        $this->error('Token: ' . env('ACCOUNT_TOKEN', ''));
         return false;
     }
 
@@ -53,21 +52,28 @@ class GetDataTimeKeepingsStaff extends Command
         $result = [];
         $client = new Client();
 
+        $token = env('ACCOUNT_TOKEN', '');
+        if (empty($token)) {
+            $token = $this->getAccessToken();
+        }
+
         if (!empty($fromDate)) {
             $responseGet = $client->get($this->generateTimeKeepings($fromDate), [
                 'headers' => [
                     'Content-Type' => "application/json",
                     'Authorization' => 'Basic ZHhpbnRlcm5hbF9wbDpnb0R4QDIwMjE=',
-                    'x-access-token' => env('ACCOUNT_TOKEN', '')
+                    'x-access-token' => $token
                 ]
             ]);
 
             if ($responseGet->getStatusCode() == 200) {
                 $timeData = json_decode($responseGet->getBody(), true) ?? [];
-                if (array_key_exists('data', $timeData)) {
-                    $result = collect($timeData['data']['items'] ?? [])->mapWithKeys(function ($item) {
-                        return [$item['staffCode'] => $item];
-                    })->toArray();
+                if (array_key_exists('success', $timeData) && $timeData['success'] === true) {
+                    if (array_key_exists('data', $timeData)) {
+                        $result = collect($timeData['data']['items'] ?? [])->mapWithKeys(function ($item) {
+                            return [$item['staffCode'] => $item];
+                        })->toArray();
+                    }
                 }
             }
         }
@@ -84,5 +90,38 @@ class GetDataTimeKeepingsStaff extends Command
         $query = "branch&closingMonth=$closingMonth&departmentObjId=$departmentObjId&limit=100&name=&page=1&project=%5Bobject%20Object%5D&search=&sortKey=createdAt&sortOrder=-1&status";
 
         return $apiLink . '?' . $query;
+    }
+
+    public function getAccessToken()
+    {
+        $accessToken = null;
+
+        $response = (new Client())->post('https://api-create.runsystem.info/signIn', [
+            'headers' => [
+                'Content-Type' => "application/json",
+                'Authorization' => 'Basic ZHhpbnRlcm5hbF9wbDpnb0R4QDIwMjE='
+            ],
+            'json' => [
+                'username' => $this->decryptString(env('ACCOUNT_NAME', ''), env('ACCOUNT_SECRET_KEY', '')),
+                'password' => $this->decryptString(env('ACCOUNT_PASSWORD', ''), env('ACCOUNT_SECRET_KEY', ''))
+            ]
+        ]);
+
+        if (!empty($data = json_decode($response->getBody(), true) ?? [])) {
+            $accessToken = $data['token'] ?? null;
+        }
+
+        return $accessToken;
+    }
+
+    function decryptString($encrypted_string, $key): bool|string
+    {
+        $cipher_method = 'AES-256-CBC';
+        $iv_length = openssl_cipher_iv_length($cipher_method);
+        $encrypted_string = base64_decode($encrypted_string);
+        $iv = substr($encrypted_string, 0, $iv_length);
+        $encrypted = substr($encrypted_string, $iv_length);
+
+        return openssl_decrypt($encrypted, $cipher_method, $key, OPENSSL_RAW_DATA, $iv);
     }
 }

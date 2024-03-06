@@ -25,8 +25,11 @@ class WebController extends Controller
     public function tool(Request $request)
     {
         // [validate]
-        if (!$request->has('calendar-from-date')) {
-            return Redirect::route('home', ['calendar-from-date' => Carbon::today()->toDateString()]);
+        if (!$request->has('calendar-from-date') || !$request->has('filter')) {
+            return Redirect::route('home', [
+                'calendar-from-date' => Carbon::today()->toDateString(),
+                'filter' => 'Tất cả'
+            ]);
         }
 
         // [validate]
@@ -173,6 +176,17 @@ class WebController extends Controller
                 }
             }
             $dataStaff = array_merge($dataStaff, $dataCheckIn, $dataEmpty);
+        }
+
+        $isViolate = $request->query('filter', 'Tất cả');
+        if ($isViolate !== 'Tất cả') {
+            $dataStaff = collect($dataStaff)->filter(function ($item) use ($isViolate) {
+                if ($isViolate === 'Có') {
+                    return $item['isViolatetimeCheckIn'] || $item['isViolateCreatedAt'];
+                } else {
+                    return !$item['isViolatetimeCheckIn'] && !$item['isViolateCreatedAt'];
+                }
+            })->toArray();
         }
 
         return view('tool')->with(['dataStaff' => $dataStaff]);
