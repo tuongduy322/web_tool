@@ -31,10 +31,14 @@ function toggleDropdown(forceClose = false) {
 
 function selectItem(item) {
     const selectedItemLabel = document.getElementById("selected-item-label");
+    selectedItemLabel.classList.remove('txt-red');
 
     if (selectedItemLabel.innerText !== item) {
         selectedItemLabel.innerText = item;
-        selectedItemLabel.style.color = (item === 'Có') ? "red" : "";
+        if ((item === 'Có')) {
+            selectedItemLabel.classList.add("txt-red");
+        }
+
         handleFilter(selectedItemLabel.innerText);
     }
 
