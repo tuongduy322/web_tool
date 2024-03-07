@@ -3,7 +3,6 @@ flatpickr.localize(flatpickr.l10ns.vn);
 const today = new Date();
 const quarterStartMonth = Math.floor(today.getMonth() / 3) * 3;
 const firstDayOfQuarter = new Date(today.getFullYear(), quarterStartMonth, 1);
-const lastDayOfQuarter = new Date(today.getFullYear(), quarterStartMonth + 3, 0);
 
 const fromDateFp = flatpickr("#calendar-from-date", {
     altInput: true,
@@ -11,7 +10,7 @@ const fromDateFp = flatpickr("#calendar-from-date", {
     dateFormat: "Y-m-d",
     allowInput: false,
     minDate: firstDayOfQuarter,
-    maxDate: lastDayOfQuarter,
+    maxDate: today, // Update maxDate to today
     disable: [
         function(date) {
             return (date.getDay() === 6 || date.getDay() === 0);
