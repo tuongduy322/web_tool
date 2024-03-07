@@ -1,6 +1,7 @@
 @php
     $defaultTime = new DateTime(request()->input('calendar-from-date'));
     $showTime = new DateTime();
+    $isShowData = $defaultTime->format('Y-m-d') >= $showTime->format('Y-m-d') && \Carbon\Carbon::now()->setTimezone('Asia/Ho_Chi_Minh')->format('H:i:s') < '10:00:00';
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -67,10 +68,10 @@
                         </div>
                     </div>
                     <div class="count-filter">
-                        <p id="label-punished">Phạt: <span>{{ $countPunished }}</span></p>
+                        <p id="label-punished">Phạt: <span>{{ $isShowData ? '-' : $countPunished }}</span></p>
                     </div>
                     <div class="count-filter">
-                        <p id="label-not-punished">OK: <span>{{ $countNotPunished }}</span></p>
+                        <p id="label-not-punished">OK: <span>{{ $isShowData ? '-' : $countNotPunished }}</span></p>
                     </div>
                 </div>
             </div>
@@ -213,7 +214,7 @@
                         </div>
                     </td>
                     <td>
-                    @if($defaultTime->format('Y-m-d') >= $showTime->format('Y-m-d') && \Carbon\Carbon::now()->setTimezone('Asia/Ho_Chi_Minh')->format('H:i:s') < '10:00:00')
+                    @if($isShowData)
                         <div class="cell cell--left"></div>
                     @else
                         @if($item['isViolateCreatedAt'] || $item['isViolatetimeCheckIn'])
