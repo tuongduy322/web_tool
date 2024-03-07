@@ -33,6 +33,15 @@ class WebController extends Controller
         }
 
         // [validate]
+        $calendarFromDate = Carbon::createFromFormat('Y-m-d', $request->input('calendar-from-date'));
+        if ($calendarFromDate->isFuture()) {
+            return redirect()->route('home', [
+                'calendar-from-date' => Carbon::today()->toDateString(),
+                'filter' => 'Tất cả'
+            ]);
+        }
+
+        // [validate]
         try {
             $request->validate(['calendar-from-date' => 'required|date|date_format:Y-m-d',]);
         } catch (ValidationException $exception) {
