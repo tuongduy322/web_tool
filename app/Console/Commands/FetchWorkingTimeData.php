@@ -19,7 +19,7 @@ class FetchWorkingTimeData extends Command
         $currentDate = $this->argument('calendar-from-date') ?? now()->format('Y-m-d');
 
         try {
-            $response = (new Client())->request('GET', 'http://192.168.56.117/', [
+            $response = (new Client())->request('GET', env('URL_WORKING_TIME_DATA', ''), [
                 'query' => [
                     'calendar-from-date' => $currentDate,
                     'filter' => 'Tất cả',
