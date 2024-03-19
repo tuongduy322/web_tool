@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use DateTime;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -234,7 +235,11 @@ class WebController extends Controller
                 $dataJson = $this->mergeDataExport(json_decode($content, true) ?? [], $dataJson);
             }
 
-            Storage::disk('public')->put($pathFile, json_encode($dataJson, JSON_PRETTY_PRINT));
+            try {
+                Storage::disk('public')->put($pathFile, json_encode($dataJson, JSON_PRETTY_PRINT));
+            } catch (\Exception $exception) {
+                abort(500);
+            }
         }
 
         return view('tool')->with([
