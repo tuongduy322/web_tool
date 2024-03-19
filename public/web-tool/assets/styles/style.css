@@ -149,7 +149,7 @@ table {
 
 *,
 html {
-  font-family: "Poppins", sans-serif;
+  font-family: "Poppins", sans-serif !important;
 }
 
 #table-container {
@@ -469,4 +469,28 @@ html {
     color: #29b71b;
     font-weight: 600;
     font-size: 20px
+}
+#htmlContent table {
+    width: 100%;
+    border-collapse: collapse;
+}
+#htmlContent td {
+    text-align: center;
+}
+
+.group-act {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#copyButton {
+    border: 0;
+    border-radius: 4px;
+    padding: 8px 16px;
+    background-color: #085F9D;
+    color: #FFFFFF;
+    font-weight: 600;
+    min-width: 130px;
 }

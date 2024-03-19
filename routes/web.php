@@ -18,4 +18,5 @@ use App\Http\Controllers\WebController;
 
 Route::controller(WebController::class)->group(function () {
     Route::get('', 'tool')->name('home');
+    Route::get('export', 'export')->name('export');
 });

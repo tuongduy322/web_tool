@@ -70,6 +70,7 @@ class WebController extends Controller
             foreach ($dataOff as $itemOff) {
                 $userObjId = $itemOff['userObjId'] ?? [];
                 $staffPosition = $this->getPositionByStaffCode($userObjId['staffCode'] ?? '', $positions);
+                $staffTeam = $this->getDepartmentByStaffCode($userObjId['staffCode'] ?? '', $positions);
                 $staffCodeComplain[] = $userObjId['staffCode'] ?? '';
                 $isViolateCreatedAt = !empty($itemOff['createdAt']) && (new DateTime($itemOff['createdAt'])) > $defaultTime;
 
@@ -81,6 +82,7 @@ class WebController extends Controller
                     'staffCode' => $userObjId['staffCode'] ?? '',
                     'staffName' => $userObjId['name'] ?? '',
                     'staffPosition' => $staffPosition,
+                    'staffTeam' => $staffTeam,
                     'requestType' => 'Nghỉ phép',
                     'fromDate' => $itemOff['fromDate'] ?? '',
                     'endDate' => $itemOff['endDate'] ?? '',
@@ -103,6 +105,7 @@ class WebController extends Controller
 
                 $staffCodeComplain[] = $itemWFH['userStaffCode'] ?? '';
                 $staffPosition = $this->getPositionByStaffCode($itemWFH['userStaffCode'] ?? '', $positions);
+                $staffTeam = $this->getDepartmentByStaffCode($itemWFH['userStaffCode'] ?? '', $positions);
                 $isViolateCreatedAt = !empty($itemWFH['createdAt']) && (new DateTime($itemWFH['createdAt'])) > $defaultTime;
                 $isViolatetimeCheckIn = empty($timeKeepingsStaff[$fromDate]['timeCheckIn']) || (new DateTime($timeKeepingsStaff[$fromDate]['timeCheckIn'])) > $defaultTime;
 
@@ -115,6 +118,7 @@ class WebController extends Controller
                     'staffCode' => $itemWFH['userStaffCode'] ?? '',
                     'staffName' => $itemWFH['username'] ?? '',
                     'staffPosition' => $staffPosition,
+                    'staffTeam' => $staffTeam,
                     'requestType' => 'WFH',
                     'fromDate' => $itemWFH['fromDate'] ?? '',
                     'endDate' => $itemWFH['endDate'] ?? '',
@@ -131,6 +135,7 @@ class WebController extends Controller
             // Get data staff empty / checkin
             $dataEmpty = $dataCheckIn = [];
             foreach ($timeKeepings as $code => $staff) {
+                $staffTeam = $this->getDepartmentByStaffCode($staff['staffCode'] ?? '', $positions);
                 if (!in_array(intval($code), $staffCodeComplain)) {
                     $dateKeepingStaff = collect($staff['timeKeepings'] ?? [])->mapWithKeys(function ($item) {
                         return [$item['dateKeeping'] => $item];
@@ -147,6 +152,7 @@ class WebController extends Controller
                                 'staffCode' => $staff['staffCode'] ?? '',
                                 'staffName' => $staff['name'] ?? '',
                                 'staffPosition' => $staff['positionName'] ?? '',
+                                'staffTeam' => $staffTeam,
                                 'requestType' => '-',
                                 'fromDate' => '',
                                 'endDate' => '',
@@ -169,6 +175,7 @@ class WebController extends Controller
                                 'staffCode' => $staff['staffCode'] ?? '',
                                 'staffName' => $staff['name'] ?? '',
                                 'staffPosition' => $staff['positionName'] ?? '',
+                                'staffTeam' => $staffTeam,
                                 'requestType' => 'Bình thường',
                                 'fromDate' => '',
                                 'endDate' => '',
@@ -187,10 +194,12 @@ class WebController extends Controller
             $dataStaff = array_merge($dataStaff, $dataCheckIn, $dataEmpty);
         }
 
+        $dataExport = [];
         $countPunished = $countNotPunished = 0;
         foreach ($dataStaff as $itemStaff) {
             if ($itemStaff['isViolatetimeCheckIn'] || $itemStaff['isViolateCreatedAt']) {
                 $countPunished++;
+                $dataExport[] = $itemStaff;
             }
 
             if (!$itemStaff['isViolatetimeCheckIn'] && !$itemStaff['isViolateCreatedAt']) {
@@ -209,11 +218,89 @@ class WebController extends Controller
             })->toArray();
         }
 
+        if ($request->has('export-data') && count($dataExport) > 0) {
+
+            $dataJson = [];
+            foreach ($dataExport as $itemExport) {
+                if (isset($itemExport['staffName']) && isset($itemExport['staffTeam'])) {
+                    $team = $itemExport['staffTeam'] === 'FE' ? 'FE' : 'BE';
+                    $staffName = $itemExport['staffName'] ?? '';
+                    $dataJson[$team][$staffName][] = $fromDate;
+                }
+            }
+
+            $pathFile = '/' . DateTime::createFromFormat('Y-m-d', $fromDate)->format('Y-m') . '/' . 'data-export.json';
+            if (Storage::disk('public')->exists($pathFile) && $content = Storage::disk('public')->get($pathFile)) {
+                $dataJson = $this->mergeDataExport(json_decode($content, true) ?? [], $dataJson);
+            }
+
+            Storage::disk('public')->put($pathFile, json_encode($dataJson, JSON_PRETTY_PRINT));
+        }
+
         return view('tool')->with([
             'dataStaff' => $dataStaff,
             'countPunished' => $countPunished,
-            'countNotPunished' => $countNotPunished
+            'countNotPunished' => $countNotPunished,
+            'dataExport' => $dataExport
         ]);
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function export(Request $request)
+    {
+        // [validate]
+        if (!$request->has('calendar-from-month')) {
+            return redirect()->route('export', ['calendar-from-month' => now()->format('Y-m')]);
+        }
+
+        $dataExport = [];
+        $pathFile = '/' . $request->query('calendar-from-month') . '/' . 'data-export.json';
+
+        if (Storage::disk('public')->exists($pathFile) && $content = Storage::disk('public')->get($pathFile)) {
+            foreach (json_decode($content, true) ?? [] as $team => $staffsTeam) {
+                foreach ($staffsTeam as $name => $dates) {
+                    foreach ($dates as $date) {
+                        $dataExport[] = [
+                            'month' => (new DateTime($date))->format('m'),
+                            'date' => (new DateTime($date))->format('d'),
+                            'staffName' => $name,
+                            'staffTeam' => $team
+                        ];
+                    }
+                }
+            }
+
+            if (count($dataExport) > 0) {
+                $dataExport = collect($dataExport)->sortBy(function ($item) {
+                    return [
+                        $item['staffTeam'], $item['staffName'], $item['month'], $item['date']
+                    ];
+                })->values()->all();
+            }
+        }
+
+        return view('welcome')->with(['dataExport' => $dataExport]);
+    }
+
+    public function mergeDataExport($arrA, $arrB): array
+    {
+        $arrC = [];
+
+        foreach ([$arrA, $arrB] as $arr) {
+            foreach ($arr as $key => $value) {
+                foreach ($value as $subKey => $subValue) {
+                    if (!isset($arrC[$key][$subKey])) {
+                        $arrC[$key][$subKey] = [];
+                    }
+                    $arrC[$key][$subKey] = array_merge($arrC[$key][$subKey], $subValue);
+                    $arrC[$key][$subKey] = array_unique($arrC[$key][$subKey]);
+                }
+            }
+        }
+
+        return $arrC;
     }
 
     public function getDisplayApproveStatus($status): string
@@ -319,6 +406,17 @@ class WebController extends Controller
         return '';
     }
 
+    public function getDepartmentByStaffCode($code, $positions)
+    {
+        if (count($positions) > 0 && array_key_exists($code, $positions)) {
+            $userPositionObjId = $positions[$code]['departmentObjId'] ?? [];
+
+            return $userPositionObjId['departmentCode'];
+        }
+
+        return '';
+    }
+
     public function listPosition(): array
     {
         $positions = [];
@@ -369,7 +467,22 @@ class WebController extends Controller
             if ($responseGet->getStatusCode() == 200) {
                 $contentData = json_decode($responseGet->getBody(), true) ?? [];
                 if (isset($contentData['data'])) {
-                    foreach ($contentData['data']['items'] ?? [] as $item) {
+                    $filteredAttendances = collect($contentData['data']['items'] ?? [])->filter(function ($attendance) use ($fromDate) {
+                        if (!empty($attendance['fromDate']) && !empty($attendance['endDate'])) {
+                            $from = Carbon::createFromFormat('Y-m-d H:i:s', $attendance['fromDate']);
+                            $end = Carbon::createFromFormat('Y-m-d H:i:s', $attendance['endDate']);
+
+                            if ($from && $end) {
+                                return Carbon::createFromFormat('Y-m-d', $fromDate)->between(
+                                    $from->startOfDay(), $end->endOfDay()
+                                );
+                            }
+                        }
+
+                        return false;
+                    });
+
+                    foreach ($filteredAttendances->toArray() as $item) {
                         $userApprovalObjId = $item['userApprovalObjId'] ?? [];
                         if (isset($userApprovalObjId['departmentObjId'])) {
                             if (in_array($userApprovalObjId['departmentObjId'], $listDeptID)) {
@@ -395,11 +508,20 @@ class WebController extends Controller
         return $apiLink . '?' . $query;
     }
 
-    public function generateUrlOff($date)
+    public function generateUrlOff($date): string
     {
+        $date = Carbon::createFromFormat('Y-m-d', $date);
+
+        // Get the start date of the current week
+        $date->startOfWeek();
+        $startOfWeek = $date->toDateString();
+
+        // Get the end date of the current week
+        $date->endOfWeek();
+        $endOfWeek = $date->toDateString();
 
         $apiLink = 'https://api-create.runsystem.info/auth/staff-attendance/personalStaffAttendance';
-        $query = "endDate=$date&page=1&startDate=$date&status=All&limit=500";
+        $query = "endDate=$endOfWeek&page=1&startDate=$startOfWeek&status=All&limit=500";
 
         return $apiLink . '?' . $query;
     }
