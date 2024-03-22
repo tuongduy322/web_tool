@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('app:get-data-time-keepings-staff')->everyFifteenMinutes()->withoutOverlapping();
-        $schedule->command('app:fetch-working-time-data')->dailyAt('23:59')->withoutOverlapping();
+        $schedule->command('app:fetch-working-time-data')->weekdays()->dailyAt('23:59')->withoutOverlapping();
     }
 
     /**
